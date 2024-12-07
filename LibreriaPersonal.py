@@ -31,8 +31,9 @@ def promedio(lista):
 
 def leerArchivo(nombre):
     """
-    Lee un archivo de texto con encabezados y organiza los datos en un diccionario,
-    donde cada clave es un encabezado y cada valor es una lista de datos de esa columna.
+    Lee un archivo de texto con encabezados y organiza los datos en un diccionario.
+    Maneja valores con espacios encerrados en comillas dobles y asegura que las columnas
+    se alineen correctamente con los encabezados.
 
     Parameters
     ----------
@@ -43,24 +44,60 @@ def leerArchivo(nombre):
     -------
     dict
         Diccionario con los encabezados como claves y los datos como listas.
-        ejemplo de uso: kmag = np.array(datos["K"]).
-        "K" Es el nombre del encabezado a buscar
+        Ejemplo de uso: 
+        datos = leerArchivo("archivo.dat")
+        kmag = np.array(datos["K"])  # "K" es un encabezado en el archivo.
+
+    Notas
+    -----
+    - Los valores encerrados entre comillas dobles y con espacios son tratados como una única entrada.
+    - Se maneja la posibilidad de líneas con más datos de los que indican los encabezados.
+    - Los valores numéricos se convierten a `float`. Si hay un error o es texto, el valor se conserva como cadena.
+    - Los valores "nan" (sin importar mayúsculas) se convierten a `np.nan`.
     """
     with open(nombre, "r") as file:
+        # Leer todas las líneas del archivo
         lineas = file.readlines()  
     
+    # Extraer los encabezados desde la primera línea
     encabezados = lineas[0].strip("# \n").split()
-    datos = {encabezado: [] for encabezado in encabezados}
+    datos = {encabezado: [] for encabezado in encabezados}  # Crear diccionario vacío para almacenar datos
     
     for linea in lineas[1:]:
-        info = linea.strip().split()
-        for i, valor in enumerate(info):
-            print(valor)
+        # Dividir la línea en palabras considerando espacios y comillas
+        elementos = linea.strip().split()
+        info_combinada = []  # Almacena los elementos procesados
+        i = 0
+
+        # Combinar elementos que están encerrados entre comillas dobles
+        while i < len(elementos):
+            if elementos[i].startswith('"') and not elementos[i].endswith('"'):
+                # Combina elementos hasta cerrar las comillas
+                j = i + 1
+                while j < len(elementos) and not elementos[j].endswith('"'):
+                    j += 1
+                combinado = " ".join(elementos[i:j+1]).replace('"', '')  # Remover comillas
+                info_combinada.append(combinado)
+                i = j + 1
+            else:
+                # Elemento individual sin comillas
+                info_combinada.append(elementos[i])
+                i += 1
+
+        # Ajustar la lista para evitar exceder el número de encabezados
+        if len(info_combinada) > len(encabezados):
+            info_combinada = info_combinada[:len(encabezados)]
+
+        # Añadir cada valor a la columna correspondiente en el diccionario
+        for i, valor in enumerate(info_combinada):
             try:
-                datos[encabezados[i]].append(float(valor) if valor != "nan" else np.nan)
+                # Convertir a float si es posible; manejar "nan" como np.nan
+                datos[encabezados[i]].append(float(valor) if valor.lower() != "nan" else np.nan)
             except ValueError:
+                # Si no es numérico, almacenar como texto
                 datos[encabezados[i]].append(valor)
-    return datos#añadir al final los sobrantes
+
+    return datos
 
 def mediana(lista):
     """
