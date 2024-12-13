@@ -29,6 +29,8 @@ def promedio(lista):
     """
     return sum(lista) / len(lista)
 
+import numpy as np
+
 def leerArchivo(nombre):
     """
     Lee un archivo de texto con encabezados y organiza los datos en un diccionario.
@@ -52,8 +54,8 @@ def leerArchivo(nombre):
     -----
     - Los valores encerrados entre comillas dobles y con espacios son tratados como una única entrada.
     - Se maneja la posibilidad de líneas con más datos de los que indican los encabezados.
-    - Los valores numéricos se convierten a `float`. Si hay un error o es texto, el valor se conserva como cadena.
-    - Los valores "nan" (sin importar mayúsculas) se convierten a `np.nan`.
+    - Los valores numéricos se convierten a float. Si hay un error o es texto, el valor se conserva como cadena.
+    - Los valores "nan" (sin importar mayúsculas) se convierten a np.nan.
     """
     with open(nombre, "r") as file:
         # Leer todas las líneas del archivo
@@ -98,6 +100,9 @@ def leerArchivo(nombre):
                 datos[encabezados[i]].append(valor)
 
     return datos
+
+
+
 
 def mediana(lista):
     """
@@ -340,6 +345,25 @@ def scot(lista):
     """
     return 3.49 * desvi(lista) * len(lista) ** (-1 / 3)
 
+def FYD(lista):
+    """
+    Calcula el ancho de los bines con la regla de Freeman & Diaconi
+
+    Parameters
+    ----------
+    lista : List
+        Lista a la cual se le vana calcular el ancho de los bines.
+
+    Returns
+    -------
+    float
+        ancho de los bines.
+
+    """
+    return 2*iqr(lista)*len(lista)**(-1/3)
+
+
+
 # ////////////////////////////////////////////////////
 # Procesamiento de archivos y generación de histogramas
 # ////////////////////////////////////////////////////
@@ -348,6 +372,7 @@ class estadistica:
     def __init__(self, x, y):
         self.x = np.array(x)
         self.y = np.array(y)
+        self.sumatoriaG = np.nansum((self.x - np.nanmean(self.x)) * (self.y - np.nanmean(self.y)))
     
     def covalenciaT(self):
         n = len(self.x)
@@ -358,13 +383,12 @@ class estadistica:
     
     def covalenciaF(self):
         n = len(self.x)
-        sumatoriaG = np.nansum((self.x - np.nanmean(self.x)) * (self.y - np.nanmean(self.y)))
-        final_covarianceF = sumatoriaG / n
+        final_covarianceF = self.sumatoriaG / n
         
-        return final_covarianceF, sumatoriaG
+        return final_covarianceF
     
-    def correlacion(self, sumatoriaG):
-        numerator = sumatoriaG
+    def correlacion(self):
+        numerator = self.sumatoriaG
         denominator = (np.nansum((self.x - np.nanmean(self.x))**2)**0.5) * (np.nansum((self.y - np.nanmean(self.y))**2)**0.5)
         final_corre = numerator / denominator
         return final_corre
