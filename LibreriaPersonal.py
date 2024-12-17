@@ -6,11 +6,8 @@ Created on Fri Dec  6 22:24:26 2024
 """
 
 import math
-import matplotlib.pyplot as plt
 import numpy as np
 from collections import Counter
-from matplotlib.ticker import AutoMinorLocator
-from scipy import stats as st
 
 def promedio(lista):
     """
@@ -28,8 +25,6 @@ def promedio(lista):
 
     """
     return sum(lista) / len(lista)
-
-import numpy as np
 
 def leerArchivo(nombre):
     """
@@ -101,6 +96,17 @@ def leerArchivo(nombre):
 
     return datos
 
+def rango(lista):
+  """
+  Función que calcula el rango de una lista
+  -----
+  Parámetros:
+  lista: lista a la que calcular el rango de
+  -----
+  Retorna: el valor del rango
+  """
+  lista.sort()
+  return lista[-1] - lista[0]
 
 
 
@@ -306,6 +312,148 @@ def iqr(vals_in):
     return None
 
 
+#///////////////////////////////////////////////////////////////////////////////
+
+def r_squared(y,theta,X):
+    y_prom=np.mean(y)
+    suma_total_cuadrados=sum([v**2 for v in y-y_prom])
+    #suma de errores cuadraticos
+    sum_sqerrors=sum([(theta[0]*xv[0]+theta[1]*xv[1]+theta[2]*xv[2]-yv)**2 for xv,yv in zip(X,y)])
+    sum_errors=sum([(theta[0]*xv[0]+theta[1]*xv[1]+theta[2]*xv[2]-yv) for xv,yv in zip(X,y)])
+    #calculo de R-squared
+    r=1-sum_errors/suma_total_cuadrados
+    r_squared=1-sum_sqerrors/suma_total_cuadrados
+    print("R-squared = ",r_squared)
+    print("R = ", r)
+
+
+def mse(x,y,theta):
+  """
+  Función que calcula el minimo error cuadrado de(...)
+  """
+  m,b = theta
+  res = [(y_i - (m*x_i+b)**2) for x_i, y_i in zip(x,y)]
+  mse = sum(res) / len(x)
+  return mse
+
+def lim_de_cuo(x, y, f, v, i, h=0.0001):
+    """
+    límimte de cuociente
+
+    Parameters
+    ----------
+    x : TYPE
+        DESCRIPTION.
+    y : TYPE
+        DESCRIPTION.
+    f : TYPE
+        DESCRIPTION.
+    v : TYPE
+        DESCRIPTION.
+    i : TYPE
+        DESCRIPTION.
+    h : TYPE, optional
+        DESCRIPTION. The default is 0.0001.
+
+    Returns
+    -------
+    TYPE
+        DESCRIPTION.
+
+    """
+    w = [v_j + (h if j==i else 0) for j,v_j in enumerate(v)]
+    return (f(x,y,w) - f(x,y,v)) / h
+
+def estimate_gradient(x, y, f, v, h = 0.0001):
+    """
+    estimado de la gradiente
+
+    Parameters
+    ----------
+    x : TYPE
+        DESCRIPTION.
+    y : TYPE
+        DESCRIPTION.
+    f : TYPE
+        DESCRIPTION.
+    v : TYPE
+        DESCRIPTION.
+    h : TYPE, optional
+        DESCRIPTION. The default is 0.0001.
+
+    Returns
+    -------
+    list
+        DESCRIPTION.
+
+    """
+    return [lim_de_cuo(x, y, f, v, j) for j in range(len(v))]
+
+def paso_en_gradiente(v, gradiente, step_size):
+    """
+        Paso de la gradiente
+
+    Parameters
+    ----------
+    v : TYPE
+        DESCRIPTION.
+    gradiente : TYPE
+        DESCRIPTION.
+    step_size : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    list
+        DESCRIPTION.
+
+    """
+    step = [step_size * g_i for g_i in gradiente]
+    return [a + b for a, b in zip(v, step)]
+
+def gradiente_mse(x, y, theta):
+    """
+    minimmos cuadradros de la gradiente
+
+    Parameters
+    ----------
+    x : TYPE
+        DESCRIPTION.
+    y : TYPE
+        DESCRIPTION.
+    theta : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    list
+        DESCRIPTION.
+
+    """
+    pendiente, intercepto = theta
+    y_pred = [pendiente * xv + intercepto for xv in x]
+
+    g1 = 2 / len(x) + sum([(y_p - y_d) * x_d for x_d, y_d, y_p in zip(x, y_pred, y)])
+    g2 = 2 / len(x) + sum([(y_p - y_d) for x_d, y_d, y_p in zip(x, y, y_pred)])
+
+    return [g1, g2]
+
+def gradiente_mse_pol(x,y,theta):
+    #calcuar predicicones del modelo con parametros actuales (input)
+    y_pred=[]
+    for xa in x:
+        yp=sum([t*xv for xv,t in zip(xa,theta)])
+        y_pred.append(yp)
+    #calcular derivada parciales para atributo 
+    derivadas=[]
+    for i in range(len(x[0])):
+        g=2/len(y)*sum([(y_p-y_d)*x_d for x_d,y_d,y_p in zip(x[:,i],y,y_pred)])
+        derivadas.append(g)
+    return derivadas
+
+def derivada(f,x,h = 0.0001):
+  return (f(x+h)-f(x))/h
+
 
 # ////////////////////////////////////////////////////
 # Funciones matemáticas y estadísticas revisadas arriba.
@@ -361,6 +509,45 @@ def FYD(lista):
 
     """
     return 2*iqr(lista)*len(lista)**(-1/3)
+
+def modas(lista):
+  """
+  Función que calcula la moda general de una lista de datos, o sea, 
+  la cantidad de cada valor dentro de la lista.
+  -------
+  Parámetros:
+  lista: lista de datos a calcluar las modas
+  -------
+  Retorna: todos los datos y sus cantidades respectiva en la lista como diccionario
+  """
+  dic = {}
+  for elemento in lista:
+    if elemento in dic:
+      dic[elemento] += 1
+    else:
+      dic[elemento] = 1
+  return dic
+
+def media_aritmetica(lista):
+  """
+  Código para calcular el promedio de una lista de números
+  ----------
+  parámetros:
+    lista: lista de números
+    mitad_list: mitad de la lista
+    mediana: numerador de la fracción de la mediana
+  ----------
+  retorna: mediana de la lista
+  """
+  mitad_list = len(lista)//2
+  lista.sort()
+  if len(lista)%2 == 0:
+    mediana = lista[mitad_list] + lista[mitad_list-1]
+    return mediana/2
+  else:
+    mediana = lista[mitad_list]
+  return mediana
+
 
 
 
